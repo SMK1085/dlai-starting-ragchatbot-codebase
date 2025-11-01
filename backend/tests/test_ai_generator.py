@@ -1,8 +1,10 @@
 """Tests for ai_generator.py - AIGenerator and tool calling workflow"""
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add backend directory to path
 backend_dir = Path(__file__).parent.parent
@@ -76,10 +78,7 @@ class TestGenerateResponseWithoutTools:
 
         history = "User: What is MCP?\nAssistant: MCP is Model Context Protocol."
 
-        generator.generate_response(
-            query="Tell me more",
-            conversation_history=history
-        )
+        generator.generate_response(query="Tell me more", conversation_history=history)
 
         # Get system parameter
         call_args = mock_anthropic_client.messages.create.call_args
@@ -98,8 +97,7 @@ class TestGenerateResponseWithTools:
         generator.client = mock_anthropic_client
 
         response = generator.generate_response(
-            query="What is Python?",
-            tools=sample_tool_definitions
+            query="What is Python?", tools=sample_tool_definitions
         )
 
         # Verify tools were passed to API
@@ -116,7 +114,7 @@ class TestGenerateResponseWithTools:
         mock_anthropic_tool_use_response,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that tool_use stop reason triggers tool execution workflow"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -125,20 +123,20 @@ class TestGenerateResponseWithTools:
         # First call returns tool use, second call returns final response
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_tool_use_response,
-            mock_anthropic_final_response
+            mock_anthropic_final_response,
         ]
 
         response = generator.generate_response(
             query="What are resources in MCP?",
             tools=sample_tool_definitions,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         # Verify tool was executed
         mock_tool_manager.execute_tool.assert_called_once_with(
             "search_course_content",
             query="resources in MCP",
-            course_name="Introduction to Model Context Protocol"
+            course_name="Introduction to Model Context Protocol",
         )
 
         # Verify second API call was made
@@ -157,7 +155,7 @@ class TestHandleToolExecution:
         mock_anthropic_tool_use_response,
         mock_anthropic_final_response,
         mock_tool_manager,
-        sample_tool_definitions
+        sample_tool_definitions,
     ):
         """Test the complete tool execution flow"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -169,13 +167,11 @@ class TestHandleToolExecution:
         base_params = {
             "messages": [{"role": "user", "content": "What are resources in MCP?"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions  # Add tools to base params
+            "tools": sample_tool_definitions,  # Add tools to base params
         }
 
         result = generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager
         )
 
         # Verify tool execution
@@ -209,7 +205,7 @@ class TestHandleToolExecution:
         mock_anthropic_tool_use_response,
         mock_anthropic_final_response,
         mock_tool_manager,
-        sample_tool_definitions
+        sample_tool_definitions,
     ):
         """Test that tool results are correctly structured"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -219,13 +215,11 @@ class TestHandleToolExecution:
         base_params = {
             "messages": [{"role": "user", "content": "Test query"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager
         )
 
         # Get the second API call
@@ -277,7 +271,7 @@ class TestErrorHandling:
         mock_anthropic_client,
         mock_anthropic_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that tool execution errors propagate"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -289,9 +283,7 @@ class TestErrorHandling:
 
         with pytest.raises(Exception, match="Tool execution failed"):
             generator.generate_response(
-                query="Test query",
-                tools=sample_tool_definitions,
-                tool_manager=mock_tool_manager
+                query="Test query", tools=sample_tool_definitions, tool_manager=mock_tool_manager
             )
 
     def test_second_api_call_error_propagates(
@@ -299,7 +291,7 @@ class TestErrorHandling:
         mock_anthropic_client,
         mock_anthropic_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that errors in second API call (after tool use) propagate"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -308,14 +300,12 @@ class TestErrorHandling:
         # First call succeeds with tool use, second call fails
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_tool_use_response,
-            Exception("Second API call failed")
+            Exception("Second API call failed"),
         ]
 
         with pytest.raises(Exception, match="Second API call failed"):
             generator.generate_response(
-                query="Test query",
-                tools=sample_tool_definitions,
-                tool_manager=mock_tool_manager
+                query="Test query", tools=sample_tool_definitions, tool_manager=mock_tool_manager
             )
 
     def test_second_api_call_empty_content_causes_exception(
@@ -323,7 +313,7 @@ class TestErrorHandling:
         mock_anthropic_client,
         mock_anthropic_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that empty content in second API call causes descriptive exception"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -335,14 +325,14 @@ class TestErrorHandling:
 
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_tool_use_response,
-            mock_empty_response
+            mock_empty_response,
         ]
 
-        with pytest.raises(Exception, match="Anthropic API returned empty response content in round 1"):
+        with pytest.raises(
+            Exception, match="Anthropic API returned empty response content in round 1"
+        ):
             generator.generate_response(
-                query="Test query",
-                tools=sample_tool_definitions,
-                tool_manager=mock_tool_manager
+                query="Test query", tools=sample_tool_definitions, tool_manager=mock_tool_manager
             )
 
 
@@ -350,10 +340,7 @@ class TestToolCallingWorkflow:
     """Test the complete tool calling workflow"""
 
     def test_no_tool_manager_with_tool_use_returns_text(
-        self,
-        mock_anthropic_client,
-        mock_anthropic_tool_use_response,
-        sample_tool_definitions
+        self, mock_anthropic_client, mock_anthropic_tool_use_response, sample_tool_definitions
     ):
         """Test that tool_use without tool_manager returns text from first content block"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -364,7 +351,7 @@ class TestToolCallingWorkflow:
         result = generator.generate_response(
             query="Test query",
             tools=sample_tool_definitions,
-            tool_manager=None  # No tool manager provided
+            tool_manager=None,  # No tool manager provided
         )
 
         # Should return text from first content block (ignoring tool use)
@@ -375,7 +362,7 @@ class TestToolCallingWorkflow:
         mock_anthropic_client,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test handling multiple tool calls in a single response"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -401,13 +388,11 @@ class TestToolCallingWorkflow:
 
         mock_anthropic_client.messages.create.side_effect = [
             mock_multi_tool_response,
-            mock_anthropic_final_response
+            mock_anthropic_final_response,
         ]
 
         generator.generate_response(
-            query="Test query",
-            tools=sample_tool_definitions,
-            tool_manager=mock_tool_manager
+            query="Test query", tools=sample_tool_definitions, tool_manager=mock_tool_manager
         )
 
         # Verify both tools were executed
@@ -418,7 +403,7 @@ class TestToolCallingWorkflow:
         mock_anthropic_client,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test handling tool use mixed with text blocks"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -442,21 +427,16 @@ class TestToolCallingWorkflow:
 
         mock_anthropic_client.messages.create.side_effect = [
             mock_response,
-            mock_anthropic_final_response
+            mock_anthropic_final_response,
         ]
 
         generator.generate_response(
-            query="Test query",
-            tools=sample_tool_definitions,
-            tool_manager=mock_tool_manager
+            query="Test query", tools=sample_tool_definitions, tool_manager=mock_tool_manager
         )
 
         # Verify only tool blocks were executed
         assert mock_tool_manager.execute_tool.call_count == 1
-        mock_tool_manager.execute_tool.assert_called_with(
-            "search_course_content",
-            query="test"
-        )
+        mock_tool_manager.execute_tool.assert_called_with("search_course_content", query="test")
 
 
 class TestMultiRoundToolCalling:
@@ -469,7 +449,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_second_tool_use_response,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that Claude can make 2 sequential tool calls"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -478,19 +458,17 @@ class TestMultiRoundToolCalling:
         # First call returns tool_use, second call returns tool_use again, third returns final
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_second_tool_use_response,  # Round 1 completion with another tool_use
-            mock_anthropic_final_response              # Round 2 completion
+            mock_anthropic_final_response,  # Round 2 completion
         ]
 
         base_params = {
             "messages": [{"role": "user", "content": "Compare resources and prompts in MCP"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         result = generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,  # Initial tool use
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager  # Initial tool use
         )
 
         # Verify 2 API calls made (one for each round after initial)
@@ -514,7 +492,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_tool_use_response,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that system stops if Claude doesn't request more tools after first round"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -526,13 +504,11 @@ class TestMultiRoundToolCalling:
         base_params = {
             "messages": [{"role": "user", "content": "What are resources in MCP?"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         result = generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager
         )
 
         # Only 1 API call made (first round completes)
@@ -550,7 +526,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_tool_use_response,
         mock_anthropic_second_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that system stops after max_tool_rounds even if Claude wants more"""
         generator = AIGenerator(api_key="test-key", model="test-model", max_tool_rounds=2)
@@ -559,26 +535,22 @@ class TestMultiRoundToolCalling:
         # Create a third tool use response (which should not be used)
         mock_third_tool_use = Mock()
         mock_third_tool_use.stop_reason = "tool_use"
-        mock_third_tool_use.content = [
-            Mock(type="text", text="Let me search one more time.")
-        ]
+        mock_third_tool_use.content = [Mock(type="text", text="Let me search one more time.")]
 
         # Both continuation calls return tool_use (trying to exceed max rounds)
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_second_tool_use_response,  # Round 1 wants more
-            mock_third_tool_use                        # Round 2 wants more (but max reached)
+            mock_third_tool_use,  # Round 2 wants more (but max reached)
         ]
 
         base_params = {
             "messages": [{"role": "user", "content": "Test query"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         result = generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager
         )
 
         # Exactly 2 API calls made (max rounds = 2)
@@ -596,7 +568,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_tool_use_response,
         mock_anthropic_second_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test error handling when tool execution fails in second round"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -608,20 +580,18 @@ class TestMultiRoundToolCalling:
         # First tool execution succeeds, second fails
         mock_tool_manager.execute_tool.side_effect = [
             "First tool result",
-            Exception("Vector store connection failed")
+            Exception("Vector store connection failed"),
         ]
 
         base_params = {
             "messages": [{"role": "user", "content": "Test query"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         with pytest.raises(Exception, match="Tool execution failed in round 2"):
             generator._handle_tool_execution(
-                mock_anthropic_tool_use_response,
-                base_params,
-                mock_tool_manager
+                mock_anthropic_tool_use_response, base_params, mock_tool_manager
             )
 
     def test_api_error_in_second_round(
@@ -629,7 +599,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_client,
         mock_anthropic_tool_use_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test error handling when API call fails in second round"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -639,22 +609,27 @@ class TestMultiRoundToolCalling:
         mock_anthropic_client.messages.create.side_effect = [
             Mock(
                 stop_reason="tool_use",
-                content=[Mock(type="tool_use", id="tool_2", name="search_course_content", input={"query": "test"})]
+                content=[
+                    Mock(
+                        type="tool_use",
+                        id="tool_2",
+                        name="search_course_content",
+                        input={"query": "test"},
+                    )
+                ],
             ),
-            Exception("API rate limit exceeded")
+            Exception("API rate limit exceeded"),
         ]
 
         base_params = {
             "messages": [{"role": "user", "content": "Test query"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         with pytest.raises(Exception, match="Anthropic API error in round 2"):
             generator._handle_tool_execution(
-                mock_anthropic_tool_use_response,
-                base_params,
-                mock_tool_manager
+                mock_anthropic_tool_use_response, base_params, mock_tool_manager
             )
 
     def test_tools_parameter_included_in_all_rounds(
@@ -664,7 +639,7 @@ class TestMultiRoundToolCalling:
         mock_anthropic_second_tool_use_response,
         mock_anthropic_final_response,
         sample_tool_definitions,
-        mock_tool_manager
+        mock_tool_manager,
     ):
         """Test that tools parameter is included in all continuation API calls"""
         generator = AIGenerator(api_key="test-key", model="test-model")
@@ -672,19 +647,17 @@ class TestMultiRoundToolCalling:
 
         mock_anthropic_client.messages.create.side_effect = [
             mock_anthropic_second_tool_use_response,
-            mock_anthropic_final_response
+            mock_anthropic_final_response,
         ]
 
         base_params = {
             "messages": [{"role": "user", "content": "Test query"}],
             "system": AIGenerator.SYSTEM_PROMPT,
-            "tools": sample_tool_definitions
+            "tools": sample_tool_definitions,
         }
 
         generator._handle_tool_execution(
-            mock_anthropic_tool_use_response,
-            base_params,
-            mock_tool_manager
+            mock_anthropic_tool_use_response, base_params, mock_tool_manager
         )
 
         # Check both API calls

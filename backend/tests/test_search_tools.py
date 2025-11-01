@@ -1,14 +1,16 @@
 """Tests for search_tools.py - CourseSearchTool and ToolManager"""
-import pytest
-from unittest.mock import Mock, patch
+
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add backend directory to path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
 from vector_store import SearchResults
 
 
@@ -38,9 +40,7 @@ class TestCourseSearchTool:
 
         # Verify search was called with correct parameters
         mock_vector_store.search.assert_called_once_with(
-            query="what are resources",
-            course_name=None,
-            lesson_number=None
+            query="what are resources", course_name=None, lesson_number=None
         )
 
         # Verify result contains expected content
@@ -54,15 +54,14 @@ class TestCourseSearchTool:
 
         tool = CourseSearchTool(mock_vector_store)
         result = tool.execute(
-            query="what are resources",
-            course_name="Introduction to Model Context Protocol"
+            query="what are resources", course_name="Introduction to Model Context Protocol"
         )
 
         # Verify search was called with course filter
         mock_vector_store.search.assert_called_once_with(
             query="what are resources",
             course_name="Introduction to Model Context Protocol",
-            lesson_number=None
+            lesson_number=None,
         )
 
         assert "Introduction to Model Context Protocol" in result
@@ -72,16 +71,11 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = sample_search_results
 
         tool = CourseSearchTool(mock_vector_store)
-        result = tool.execute(
-            query="what are resources",
-            lesson_number=2
-        )
+        result = tool.execute(query="what are resources", lesson_number=2)
 
         # Verify search was called with lesson filter
         mock_vector_store.search.assert_called_once_with(
-            query="what are resources",
-            course_name=None,
-            lesson_number=2
+            query="what are resources", course_name=None, lesson_number=2
         )
 
         assert "Lesson 2" in result
@@ -94,14 +88,14 @@ class TestCourseSearchTool:
         result = tool.execute(
             query="what are resources",
             course_name="Introduction to Model Context Protocol",
-            lesson_number=2
+            lesson_number=2,
         )
 
         # Verify search was called with both filters
         mock_vector_store.search.assert_called_once_with(
             query="what are resources",
             course_name="Introduction to Model Context Protocol",
-            lesson_number=2
+            lesson_number=2,
         )
 
         assert "Introduction to Model Context Protocol" in result
@@ -121,11 +115,7 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = empty_search_results
 
         tool = CourseSearchTool(mock_vector_store)
-        result = tool.execute(
-            query="nonexistent topic",
-            course_name="MCP",
-            lesson_number=5
-        )
+        result = tool.execute(query="nonexistent topic", course_name="MCP", lesson_number=5)
 
         assert "No relevant content found" in result
         assert "in course 'MCP'" in result
@@ -148,10 +138,7 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = error_result
 
         tool = CourseSearchTool(mock_vector_store)
-        result = tool.execute(
-            query="test query",
-            course_name="NonexistentCourse"
-        )
+        result = tool.execute(query="test query", course_name="NonexistentCourse")
 
         assert "No course found matching 'NonexistentCourse'" in result
 
@@ -198,8 +185,7 @@ class TestCourseSearchTool:
 
         # Verify lesson link retrieval was called
         mock_vector_store.get_lesson_link.assert_called_with(
-            "Introduction to Model Context Protocol",
-            2
+            "Introduction to Model Context Protocol", 2
         )
 
         # Verify links are in sources
@@ -251,9 +237,7 @@ class TestCourseOutlineTool:
         """Test formatting outline when course has no link"""
         outline_without_link = {
             "course_title": "Test Course",
-            "lessons": [
-                {"lesson_number": 1, "lesson_title": "Lesson 1"}
-            ]
+            "lessons": [{"lesson_number": 1, "lesson_title": "Lesson 1"}],
         }
         mock_vector_store.get_course_outline.return_value = outline_without_link
 
@@ -269,7 +253,7 @@ class TestCourseOutlineTool:
         outline_without_lessons = {
             "course_title": "Empty Course",
             "course_link": "https://example.com/empty",
-            "lessons": []
+            "lessons": [],
         }
         mock_vector_store.get_course_outline.return_value = outline_without_lessons
 
@@ -329,10 +313,7 @@ class TestToolManager:
         tool = CourseSearchTool(mock_vector_store)
         manager.register_tool(tool)
 
-        result = manager.execute_tool(
-            "search_course_content",
-            query="test query"
-        )
+        result = manager.execute_tool("search_course_content", query="test query")
 
         assert "Introduction to Model Context Protocol" in result
 

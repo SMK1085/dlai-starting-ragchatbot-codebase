@@ -1,15 +1,17 @@
 """Shared pytest fixtures for testing the RAG chatbot system"""
-import pytest
-from unittest.mock import Mock, MagicMock
-from typing import List, Dict, Any
+
 import sys
 from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 # Add backend directory to path for imports
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from models import Course, Lesson, CourseChunk
+from models import Course, CourseChunk, Lesson
 from vector_store import SearchResults
 
 
@@ -22,20 +24,40 @@ def sample_courses() -> List[Course]:
             course_link="https://example.com/mcp",
             instructor="Test Instructor",
             lessons=[
-                Lesson(lesson_number=0, title="Introduction", lesson_link="https://example.com/mcp/lesson0"),
-                Lesson(lesson_number=1, title="Getting Started", lesson_link="https://example.com/mcp/lesson1"),
-                Lesson(lesson_number=2, title="Resources", lesson_link="https://example.com/mcp/lesson2"),
-            ]
+                Lesson(
+                    lesson_number=0,
+                    title="Introduction",
+                    lesson_link="https://example.com/mcp/lesson0",
+                ),
+                Lesson(
+                    lesson_number=1,
+                    title="Getting Started",
+                    lesson_link="https://example.com/mcp/lesson1",
+                ),
+                Lesson(
+                    lesson_number=2,
+                    title="Resources",
+                    lesson_link="https://example.com/mcp/lesson2",
+                ),
+            ],
         ),
         Course(
             title="Building Towards Computer Use",
             course_link="https://example.com/computer-use",
             instructor="Test Instructor 2",
             lessons=[
-                Lesson(lesson_number=0, title="Introduction", lesson_link="https://example.com/cu/lesson0"),
-                Lesson(lesson_number=1, title="Fundamentals", lesson_link="https://example.com/cu/lesson1"),
-            ]
-        )
+                Lesson(
+                    lesson_number=0,
+                    title="Introduction",
+                    lesson_link="https://example.com/cu/lesson0",
+                ),
+                Lesson(
+                    lesson_number=1,
+                    title="Fundamentals",
+                    lesson_link="https://example.com/cu/lesson1",
+                ),
+            ],
+        ),
     ]
 
 
@@ -47,20 +69,20 @@ def sample_course_chunks() -> List[CourseChunk]:
             content="Resources are entities in MCP that servers can provide to clients. They represent data sources or content.",
             course_title="Introduction to Model Context Protocol",
             lesson_number=2,
-            chunk_index=0
+            chunk_index=0,
         ),
         CourseChunk(
             content="MCP servers can expose multiple resources, each with a unique URI and metadata.",
             course_title="Introduction to Model Context Protocol",
             lesson_number=2,
-            chunk_index=1
+            chunk_index=1,
         ),
         CourseChunk(
             content="Computer use enables AI systems to interact with software interfaces through visual understanding.",
             course_title="Building Towards Computer Use",
             lesson_number=1,
-            chunk_index=0
-        )
+            chunk_index=0,
+        ),
     ]
 
 
@@ -70,34 +92,29 @@ def sample_search_results() -> SearchResults:
     return SearchResults(
         documents=[
             "Resources are entities in MCP that servers can provide to clients. They represent data sources or content.",
-            "MCP servers can expose multiple resources, each with a unique URI and metadata."
+            "MCP servers can expose multiple resources, each with a unique URI and metadata.",
         ],
         metadata=[
             {
                 "course_title": "Introduction to Model Context Protocol",
                 "lesson_number": 2,
-                "chunk_index": 0
+                "chunk_index": 0,
             },
             {
                 "course_title": "Introduction to Model Context Protocol",
                 "lesson_number": 2,
-                "chunk_index": 1
-            }
+                "chunk_index": 1,
+            },
         ],
         distances=[0.2, 0.3],
-        error=None
+        error=None,
     )
 
 
 @pytest.fixture
 def empty_search_results() -> SearchResults:
     """Empty search results for testing no-results scenarios"""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[],
-        error=None
-    )
+    return SearchResults(documents=[], metadata=[], distances=[], error=None)
 
 
 @pytest.fixture
@@ -121,8 +138,8 @@ def mock_vector_store(sample_search_results, sample_courses):
         "lessons": [
             {"lesson_number": 0, "lesson_title": "Introduction"},
             {"lesson_number": 1, "lesson_title": "Getting Started"},
-            {"lesson_number": 2, "lesson_title": "Resources"}
-        ]
+            {"lesson_number": 2, "lesson_title": "Resources"},
+        ],
     }
 
     # Mock lesson link retrieval
@@ -164,7 +181,7 @@ def mock_anthropic_tool_use_response():
     tool_block.name = "search_course_content"
     tool_block.input = {
         "query": "resources in MCP",
-        "course_name": "Introduction to Model Context Protocol"
+        "course_name": "Introduction to Model Context Protocol",
     }
 
     mock_response.content = [text_block, tool_block]
@@ -178,7 +195,10 @@ def mock_anthropic_final_response():
     mock_response = Mock()
     mock_response.stop_reason = "end_turn"
     mock_response.content = [
-        Mock(type="text", text="Based on the course content, resources are entities in MCP that servers can provide to clients.")
+        Mock(
+            type="text",
+            text="Based on the course content, resources are entities in MCP that servers can provide to clients.",
+        )
     ]
 
     return mock_response
@@ -202,7 +222,7 @@ def mock_anthropic_second_tool_use_response():
     tool_block.name = "search_course_content"
     tool_block.input = {
         "query": "prompts in MCP",
-        "course_name": "Introduction to Model Context Protocol"
+        "course_name": "Introduction to Model Context Protocol",
     }
 
     mock_response.content = [text_block, tool_block]
@@ -222,19 +242,19 @@ def sample_tool_definitions() -> List[Dict[str, Any]]:
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "What to search for in the course content"
+                        "description": "What to search for in the course content",
                     },
                     "course_name": {
                         "type": "string",
-                        "description": "Course title (partial matches work)"
+                        "description": "Course title (partial matches work)",
                     },
                     "lesson_number": {
                         "type": "integer",
-                        "description": "Specific lesson number to search within"
-                    }
+                        "description": "Specific lesson number to search within",
+                    },
                 },
-                "required": ["query"]
-            }
+                "required": ["query"],
+            },
         }
     ]
 
@@ -254,7 +274,7 @@ def mock_tool_manager(sample_tool_definitions):
     mock_manager.get_last_sources.return_value = [
         {
             "text": "Introduction to Model Context Protocol - Lesson 2",
-            "link": "https://example.com/mcp/lesson2"
+            "link": "https://example.com/mcp/lesson2",
         }
     ]
 

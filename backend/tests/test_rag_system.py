@@ -1,8 +1,10 @@
 """Tests for rag_system.py - End-to-end RAG system integration tests"""
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add backend directory to path
 backend_dir = Path(__file__).parent.parent
@@ -30,17 +32,17 @@ def mock_config():
 class TestRAGSystemInitialization:
     """Test RAG system initialization"""
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_initialization(
         self,
         mock_session_manager,
         mock_ai_generator,
         mock_vector_store,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test that RAG system initializes all components correctly"""
         system = RAGSystem(mock_config)
@@ -54,17 +56,17 @@ class TestRAGSystemInitialization:
         assert system.search_tool is not None
         assert system.outline_tool is not None
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_tools_registered(
         self,
         mock_session_manager,
         mock_ai_generator,
         mock_vector_store,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test that both search tools are registered"""
         system = RAGSystem(mock_config)
@@ -81,17 +83,17 @@ class TestRAGSystemInitialization:
 class TestRAGSystemQuery:
     """Test RAG system query functionality"""
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_general_knowledge_no_tool_use(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test query for general knowledge (should not use tools)"""
         # Set up mocks
@@ -119,17 +121,17 @@ class TestRAGSystemQuery:
         assert response == "Python is a programming language."
         assert sources == []
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_course_content_with_tool_use(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test query for course content (should use tools and return sources)"""
         # Set up mocks
@@ -145,7 +147,7 @@ class TestRAGSystemQuery:
         mock_sources = [
             {
                 "text": "Introduction to Model Context Protocol - Lesson 2",
-                "link": "https://example.com/mcp/lesson2"
+                "link": "https://example.com/mcp/lesson2",
             }
         ]
         mock_tool_manager.get_last_sources.return_value = mock_sources
@@ -172,17 +174,17 @@ class TestRAGSystemQuery:
         # Verify sources were reset after retrieval
         mock_tool_manager.reset_sources.assert_called_once()
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_with_session_id(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test query with session ID for conversation context"""
         # Set up mocks
@@ -214,22 +216,20 @@ class TestRAGSystemQuery:
 
         # Verify exchange was added to history (original query, not wrapped prompt)
         mock_session_instance.add_exchange.assert_called_once_with(
-            session_id,
-            "Tell me more",
-            "It is a protocol."
+            session_id, "Tell me more", "It is a protocol."
         )
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_without_session_id(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test query without session ID (no history)"""
         # Set up mocks
@@ -263,17 +263,17 @@ class TestRAGSystemQuery:
 class TestRAGSystemErrorHandling:
     """Test error handling in RAG system"""
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_with_ai_api_error(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test that AI API errors propagate through query"""
         # Set up mocks
@@ -293,17 +293,17 @@ class TestRAGSystemErrorHandling:
         with pytest.raises(Exception, match="API Error: Invalid API key"):
             system.query("Test query")
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_query_with_tool_execution_error(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test that tool execution errors propagate through query"""
         # Set up mocks
@@ -328,10 +328,10 @@ class TestRAGSystemErrorHandling:
 class TestRAGSystemEndToEnd:
     """End-to-end integration tests simulating real workflow"""
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_complete_workflow_with_search(
         self,
         mock_session_manager_class,
@@ -339,7 +339,7 @@ class TestRAGSystemEndToEnd:
         mock_vector_store_class,
         mock_doc_processor,
         mock_config,
-        sample_search_results
+        sample_search_results,
     ):
         """Test complete workflow: query → tool decision → search → synthesis"""
         # Set up mocks to simulate tool calling workflow
@@ -368,7 +368,7 @@ class TestRAGSystemEndToEnd:
         mock_sources = [
             {
                 "text": "Introduction to Model Context Protocol - Lesson 2",
-                "link": "https://example.com/mcp/lesson2"
+                "link": "https://example.com/mcp/lesson2",
             }
         ]
         mock_tool_manager.get_last_sources.return_value = mock_sources
@@ -387,17 +387,17 @@ class TestRAGSystemEndToEnd:
         # Verify history was updated
         mock_session_instance.add_exchange.assert_called_once()
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_multi_turn_conversation(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test multi-turn conversation with context"""
         # Set up mocks
@@ -423,7 +423,9 @@ class TestRAGSystemEndToEnd:
         # Second turn with history
         history = "User: What is MCP?\nAssistant: MCP is Model Context Protocol."
         mock_session_instance.get_conversation_history.return_value = history
-        mock_ai_instance.generate_response.return_value = "It enables LLMs to interact with external tools."
+        mock_ai_instance.generate_response.return_value = (
+            "It enables LLMs to interact with external tools."
+        )
         response2, _ = system.query("How does it work?", session_id=session_id)
 
         # Verify both exchanges were added
@@ -437,17 +439,17 @@ class TestRAGSystemEndToEnd:
 class TestRAGSystemAnalytics:
     """Test course analytics functionality"""
 
-    @patch('rag_system.DocumentProcessor')
-    @patch('rag_system.VectorStore')
-    @patch('rag_system.AIGenerator')
-    @patch('rag_system.SessionManager')
+    @patch("rag_system.DocumentProcessor")
+    @patch("rag_system.VectorStore")
+    @patch("rag_system.AIGenerator")
+    @patch("rag_system.SessionManager")
     def test_get_course_analytics(
         self,
         mock_session_manager_class,
         mock_ai_generator_class,
         mock_vector_store_class,
         mock_doc_processor,
-        mock_config
+        mock_config,
     ):
         """Test getting course analytics"""
         # Set up mocks
@@ -457,7 +459,7 @@ class TestRAGSystemAnalytics:
             "Introduction to Model Context Protocol",
             "Building Towards Computer Use",
             "Course 3",
-            "Course 4"
+            "Course 4",
         ]
         mock_vector_store_class.return_value = mock_vector_store_instance
 

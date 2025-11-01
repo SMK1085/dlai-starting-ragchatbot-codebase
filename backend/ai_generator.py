@@ -1,9 +1,11 @@
+from typing import Any, Dict, List, Optional
+
 import anthropic
-from typing import List, Optional, Dict, Any
+
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
-    
+
     # Static system prompt to avoid rebuilding on each call
     SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to tools for course information.
 
@@ -40,55 +42,54 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
-    
+
     def __init__(self, api_key: str, model: str, max_tool_rounds: int = 2):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         self.max_tool_rounds = max_tool_rounds  # Maximum sequential tool calling rounds
 
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
-    
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
+
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
-        
+
         Args:
             query: The user's question or request
             conversation_history: Previous messages for context
             tools: Available tools the AI can use
             tool_manager: Manager to execute tools
-            
+
         Returns:
             Generated response as string
         """
-        
+
         # Build system content efficiently - avoid string ops when possible
         system_content = (
             f"{self.SYSTEM_PROMPT}\n\nPrevious conversation:\n{conversation_history}"
-            if conversation_history 
+            if conversation_history
             else self.SYSTEM_PROMPT
         )
-        
+
         # Prepare API call parameters efficiently
         api_params = {
             **self.base_params,
             "messages": [{"role": "user", "content": query}],
-            "system": system_content
+            "system": system_content,
         }
-        
+
         # Add tools if available
         if tools:
             api_params["tools"] = tools
             api_params["tool_choice"] = {"type": "auto"}
-        
+
         # Get response from Claude
         try:
             response = self.client.messages.create(**api_params)
@@ -105,7 +106,7 @@ Provide only the direct answer to what was asked.
 
         # Return direct response
         return response.content[0].text
-    
+
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
         Handle execution of tool calls across multiple rounds (up to max_tool_rounds).
@@ -150,15 +151,16 @@ Provide only the direct answer to what was asked.
                 if content_block.type == "tool_use":
                     try:
                         tool_result = tool_manager.execute_tool(
-                            content_block.name,
-                            **content_block.input
+                            content_block.name, **content_block.input
                         )
 
-                        tool_results.append({
-                            "type": "tool_result",
-                            "tool_use_id": content_block.id,
-                            "content": tool_result
-                        })
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": content_block.id,
+                                "content": tool_result,
+                            }
+                        )
                     except Exception as e:
                         # Tool execution errors propagate immediately
                         raise Exception(f"Tool execution failed in round {round_count}: {str(e)}")
@@ -173,7 +175,7 @@ Provide only the direct answer to what was asked.
                 "messages": messages,
                 "system": base_params["system"],
                 "tools": base_params.get("tools", []),  # Include tools parameter
-                "tool_choice": {"type": "auto"}
+                "tool_choice": {"type": "auto"},
             }
 
             # Make next API call
@@ -184,7 +186,9 @@ Provide only the direct answer to what was asked.
 
             # Validate response has content
             if not current_response.content or len(current_response.content) == 0:
-                raise Exception(f"Anthropic API returned empty response content in round {round_count}")
+                raise Exception(
+                    f"Anthropic API returned empty response content in round {round_count}"
+                )
 
             # Check if Claude wants to use more tools
             if current_response.stop_reason != "tool_use":

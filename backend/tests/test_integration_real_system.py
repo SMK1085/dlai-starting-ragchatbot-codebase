@@ -1,16 +1,18 @@
 """Integration tests against the real system (not mocked)
 These tests will use the actual API and database to identify real issues
 """
-import pytest
+
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add backend directory to path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from rag_system import RAGSystem
 from config import Config
+from rag_system import RAGSystem
 
 
 @pytest.mark.integration
@@ -23,7 +25,7 @@ class TestRealSystemIntegration:
             config = Config()
             system = RAGSystem(config)
 
-            print(f"\nInitialization successful!")
+            print("\nInitialization successful!")
             print(f"API Key present: {bool(config.ANTHROPIC_API_KEY)}")
             print(f"ChromaDB path: {config.CHROMA_PATH}")
             print(f"Embedding model: {config.EMBEDDING_MODEL}")
@@ -34,7 +36,7 @@ class TestRealSystemIntegration:
             print(f"Course titles: {analytics['course_titles']}")
 
             assert system is not None
-            assert analytics['total_courses'] >= 0
+            assert analytics["total_courses"] >= 0
 
         except Exception as e:
             pytest.fail(f"System initialization failed: {e}")
@@ -59,12 +61,13 @@ class TestRealSystemIntegration:
             print("✓ General knowledge query succeeded")
 
         except Exception as e:
-            print(f"\n✗ General knowledge query failed!")
+            print("\n✗ General knowledge query failed!")
             print(f"Error type: {type(e).__name__}")
             print(f"Error message: {str(e)}")
 
             # Print full traceback for diagnosis
             import traceback
+
             traceback.print_exc()
 
             pytest.fail(f"General knowledge query failed: {e}")
@@ -77,7 +80,7 @@ class TestRealSystemIntegration:
 
             # First check if we have courses
             analytics = system.get_course_analytics()
-            if analytics['total_courses'] == 0:
+            if analytics["total_courses"] == 0:
                 pytest.skip("No courses in database to test with")
 
             print("\n\nTesting course content query...")
@@ -99,12 +102,13 @@ class TestRealSystemIntegration:
             print("✓ Course content query succeeded")
 
         except Exception as e:
-            print(f"\n✗ Course content query FAILED!")
+            print("\n✗ Course content query FAILED!")
             print(f"Error type: {type(e).__name__}")
             print(f"Error message: {str(e)}")
 
             # Print full traceback for diagnosis
             import traceback
+
             traceback.print_exc()
 
             # This is the critical failure we're investigating
@@ -132,11 +136,12 @@ class TestRealSystemIntegration:
             print("✓ Direct search tool test succeeded")
 
         except Exception as e:
-            print(f"\n✗ Direct search tool test FAILED!")
+            print("\n✗ Direct search tool test FAILED!")
             print(f"Error type: {type(e).__name__}")
             print(f"Error message: {str(e)}")
 
             import traceback
+
             traceback.print_exc()
 
             pytest.fail(f"Direct search tool test failed: {e}")
@@ -154,10 +159,7 @@ class TestRealSystemIntegration:
             ai = AIGenerator(config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL)
 
             response = ai.generate_response(
-                query="What is 2+2?",
-                conversation_history=None,
-                tools=None,
-                tool_manager=None
+                query="What is 2+2?", conversation_history=None, tools=None, tool_manager=None
             )
 
             print(f"Response: {response}")
@@ -168,11 +170,12 @@ class TestRealSystemIntegration:
             print("✓ AI generator test succeeded")
 
         except Exception as e:
-            print(f"\n✗ AI generator test FAILED!")
+            print("\n✗ AI generator test FAILED!")
             print(f"Error type: {type(e).__name__}")
             print(f"Error message: {str(e)}")
 
             import traceback
+
             traceback.print_exc()
 
             pytest.fail(f"AI generator test failed: {e}")
@@ -187,14 +190,14 @@ class TestRealSystemIntegration:
 
             # Check if we have data
             analytics = system.get_course_analytics()
-            if analytics['total_courses'] == 0:
+            if analytics["total_courses"] == 0:
                 pytest.skip("No courses in database to test with")
 
             response = system.ai_generator.generate_response(
                 query="What are resources in MCP?",
                 conversation_history=None,
                 tools=system.tool_manager.get_tool_definitions(),
-                tool_manager=system.tool_manager
+                tool_manager=system.tool_manager,
             )
 
             print(f"Response: {response[:200]}...")
@@ -205,11 +208,12 @@ class TestRealSystemIntegration:
             print("✓ AI generator with tools test succeeded")
 
         except Exception as e:
-            print(f"\n✗ AI generator with tools test FAILED!")
+            print("\n✗ AI generator with tools test FAILED!")
             print(f"Error type: {type(e).__name__}")
             print(f"Error message: {str(e)}")
 
             import traceback
+
             traceback.print_exc()
 
             pytest.fail(f"AI generator with tools test failed: {e}")

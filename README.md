@@ -54,3 +54,58 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+## Development
+
+### Code Quality Tools
+
+This project uses several tools to maintain code quality:
+
+- **Black**: Code formatter for consistent style
+- **isort**: Import statement organizer
+- **Flake8**: Linter for catching common errors
+- **MyPy**: Static type checker
+- **Pytest**: Testing framework
+
+### Running Quality Checks
+
+Format your code:
+```bash
+./format.sh
+```
+
+Run all quality checks:
+```bash
+./quality-check.sh
+```
+
+Run individual tools:
+```bash
+# Format code with black
+uv run black backend/ main.py
+
+# Sort imports with isort
+uv run isort backend/ main.py
+
+# Run linting with flake8
+uv run flake8 backend/ main.py
+
+# Run type checking with mypy
+uv run mypy backend/ main.py
+
+# Run tests
+cd backend && uv run pytest
+```
+
+### Running Tests
+
+```bash
+cd backend
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_rag_system.py
+```
+
