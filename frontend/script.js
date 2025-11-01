@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    newChatButton = document.getElementById('newChatButton');
+
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -28,8 +29,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat button
+    newChatButton.addEventListener('click', createNewSession);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -71,7 +74,11 @@ async function sendMessage() {
             })
         });
 
-        if (!response.ok) throw new Error('Query failed');
+        if (!response.ok) {
+            // Read actual error from API response
+            const errorData = await response.json().catch(() => ({ detail: 'Query failed' }));
+            throw new Error(errorData.detail || 'Query failed');
+        }
 
         const data = await response.json();
         
@@ -122,10 +129,19 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources as individual badges - each source is now an object with 'text' and 'link'
+        const formattedSources = sources.map(source => {
+            if (source.link) {
+                return `<a href="${source.link}" target="_blank" rel="noopener noreferrer" class="source-badge">${source.text}</a>`;
+            } else {
+                return `<span class="source-badge source-badge-no-link">${source.text}</span>`;
+            }
+        }).join('');
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${formattedSources}</div>
             </details>
         `;
     }
