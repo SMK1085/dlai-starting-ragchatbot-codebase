@@ -261,3 +261,150 @@ def mock_tool_manager(sample_tool_definitions):
     mock_manager.reset_sources.return_value = None
 
     return mock_manager
+
+
+# ===================================================================
+# API Testing Fixtures
+# ===================================================================
+
+@pytest.fixture
+def mock_rag_system():
+    """Mock RAGSystem for API testing"""
+    mock_system = Mock()
+
+    # Mock query method
+    mock_system.query.return_value = (
+        "This is a test response from the RAG system.",
+        [
+            {
+                "text": "Introduction to Model Context Protocol - Lesson 2",
+                "link": "https://example.com/mcp/lesson2"
+            }
+        ]
+    )
+
+    # Mock session manager
+    mock_system.session_manager = Mock()
+    mock_system.session_manager.create_session.return_value = "test-session-123"
+
+    # Mock course analytics
+    mock_system.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": [
+            "Introduction to Model Context Protocol",
+            "Building Towards Computer Use"
+        ]
+    }
+
+    return mock_system
+
+
+@pytest.fixture
+def test_app(mock_rag_system, tmp_path):
+    """Create a test FastAPI app without static file mounting issues
+
+    This fixture creates a version of the app that:
+    1. Uses a mock RAGSystem instead of real one
+    2. Uses a temporary directory for static files instead of ../frontend
+    3. Includes all API endpoints but avoids initialization issues
+    """
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.middleware.trustedhost import TrustedHostMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional, Dict
+
+    # Create test app with same configuration as real app
+    app = FastAPI(title="Course Materials RAG System (Test)", root_path="")
+
+    # Add trusted host middleware
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*"]
+    )
+
+    # Enable CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+    # Use mock RAG system
+    rag_system = mock_rag_system
+
+    # Pydantic models (same as app.py)
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[Dict[str, Optional[str]]]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    # API Endpoints (same as app.py)
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = rag_system.session_manager.create_session()
+
+            answer, sources = rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            analytics = rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Note: No startup event or static file mounting in test app
+
+    return app
+
+
+@pytest.fixture
+def test_client(test_app):
+    """Create a TestClient for API testing"""
+    from fastapi.testclient import TestClient
+
+    return TestClient(test_app)
+
+
+@pytest.fixture
+def sample_query_request():
+    """Sample query request payload"""
+    return {
+        "query": "What are resources in MCP?",
+        "session_id": None
+    }
+
+
+@pytest.fixture
+def sample_query_request_with_session():
+    """Sample query request with session ID"""
+    return {
+        "query": "Tell me more about that",
+        "session_id": "test-session-456"
+    }
