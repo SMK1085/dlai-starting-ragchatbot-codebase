@@ -5,8 +5,10 @@
     padding: 0;
 }
 
-/* CSS Variables */
-:root {
+/* CSS Variables using data-theme attribute */
+/* Dark Theme (Default) - data-theme="dark" or no attribute */
+:root,
+:root[data-theme="dark"] {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
     --background: #0f172a;
@@ -22,6 +24,39 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+}
+
+/* Light Theme - data-theme="light" */
+:root[data-theme="light"] {
+    /* Primary colors - blue palette for interactive elements */
+    --primary-color: #1d4ed8;        /* Darker blue for better contrast (blue-700) */
+    --primary-hover: #1e40af;        /* Even darker on hover (blue-800) */
+
+    /* Background hierarchy */
+    --background: #f1f5f9;           /* Slightly darker background (slate-100) */
+    --surface: #ffffff;              /* Pure white for cards and surfaces */
+    --surface-hover: #e2e8f0;        /* Visible hover state (slate-200) */
+
+    /* Text colors - ensuring WCAG AA compliance */
+    --text-primary: #0f172a;         /* Dark slate for primary text (slate-900) */
+    --text-secondary: #334155;       /* Medium slate for secondary text (slate-700) */
+
+    /* Borders and dividers */
+    --border-color: #cbd5e1;         /* More visible borders (slate-300) */
+
+    /* Message bubbles */
+    --user-message: #1d4ed8;         /* Matches primary color (blue-700) */
+    --assistant-message: #f8fafc;    /* Light slate background (slate-50) */
+
+    /* Shadows - subtle depth */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    /* Focus and interaction states */
+    --focus-ring: rgba(29, 78, 216, 0.3);  /* More visible focus ring */
+
+    /* Special elements */
+    --welcome-bg: #dbeafe;           /* Lighter blue background (blue-100) */
+    --welcome-border: #3b82f6;       /* Medium blue border (blue-500) */
 }
 
 /* Base Styles */
@@ -785,4 +820,125 @@ details[open] .suggested-header::before {
     .sidebar {
         width: 280px;
     }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+/* Icon animations */
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+    position: absolute;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0);
+}
+
+.theme-toggle .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+:root[data-theme="light"] .theme-toggle .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+:root[data-theme="light"] .theme-toggle .moon-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0);
+}
+
+/* Responsive adjustments for toggle button */
+@media (max-width: 768px) {
+    .theme-toggle {
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Light Theme Specific Component Overrides */
+:root[data-theme="light"] .message-content code {
+    background-color: #e2e8f0;  /* slate-200 - visible code background */
+    color: #1e293b;             /* slate-800 - dark code text */
+}
+
+:root[data-theme="light"] .message-content pre {
+    background-color: #1e293b;  /* slate-800 - dark background for code blocks */
+    color: #f1f5f9;             /* slate-100 - light text in code blocks */
+    border: 1px solid #334155;  /* slate-700 - subtle border */
+}
+
+:root[data-theme="light"] .message-content pre code {
+    background-color: transparent;
+    color: #f1f5f9;             /* light text in pre blocks */
+}
+
+:root[data-theme="light"] .message-content blockquote {
+    border-left-color: var(--primary-color);
+    color: var(--text-secondary);
+    background-color: #f8fafc;  /* slate-50 - subtle background */
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+}
+
+/* Light theme loading animation */
+:root[data-theme="light"] .loading span {
+    background: var(--text-secondary);
+}
+
+/* Light theme source badges */
+:root[data-theme="light"] .source-badge {
+    background: rgba(29, 78, 216, 0.1);
+    color: #1e40af;             /* blue-800 - darker for better contrast */
+    border-color: rgba(29, 78, 216, 0.3);
+}
+
+:root[data-theme="light"] .source-badge:hover {
+    background: rgba(29, 78, 216, 0.15);
+    border-color: #1d4ed8;
+}
+
+:root[data-theme="light"] .source-badge-no-link {
+    background: rgba(51, 65, 85, 0.1);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
 }
